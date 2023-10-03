@@ -1,0 +1,92 @@
+#!/usr/bin/python3
+
+import socket
+import jsockets
+import sys
+import random
+import logging
+
+logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s.%(msecs)03d | %(levelname).3s @ %(lineno)03d] %(message)s', datefmt='%H:%M:%S')
+
+# Envia un paquete con loss_rate porcentaje de perdida
+# si loss_rate = 5, implica un 5% de perdida
+def send_loss(s, data):
+    global loss_rate
+    if random.random() * 100 > loss_rate:
+        s.send(data)
+    else:
+        print("[send_loss]")
+
+# Recibe un paquete con loss_rate porcentaje de perdida
+# Si decide perderlo, vuelve al recv y no retorna aun
+# Retorna None si hay timeout o error
+def recv_loss(s, size):
+    global loss_rate
+    try:
+        while True:
+            data = s.recv(size)
+            if random.random() * 100 <= loss_rate:
+                print("[recv_loss]")
+            else:
+                break
+    except socket.timeout:
+        print('timeout', file=sys.stderr)
+        data = None
+    except socket.error:
+        print('recv err', file=sys.stderr)
+        data = None
+    return data
+
+
+
+def main():
+    # ! Checking arg integrity
+    if len(sys.argv) != 8:
+        logging.error(f'Use: {sys.argv[0]} pack_sz nbytes timeout loss fileout host port')
+        logging.debug(f'sys.argv = {sys.argv}')
+        sys.exit(1)
+    (pack_sz, nbytes, timeout, loss_rate, fileout, host, port) = sys.argv[1:]
+
+    if any(not x.isdigit() for x in [pack_sz, nbytes, timeout, loss_rate, port]):
+        logging.error(f'Use: {sys.argv[0]} nbytes timeout loss fileout host port')
+        sys.exit(1)
+
+    pack_sz, nbytes, timeout, loss_rate, port = map(int, [pack_sz, nbytes, timeout, loss_rate, port])
+
+    logging.info(f"""
+        propuse paquete: {pack_sz} B
+        recibo paquete:  {pack_sz} B
+        """)
+    
+    # ! Creating socket
+    
+    logging.info(f'Creating socket')
+    s = jsockets.socket_udp_connect(host, port)
+    
+    # * Error handling socket
+    if s is None:
+        logging.error(f'Could not open socket')
+        sys.exit(1)
+        
+    s.settimeout()
+    
+    logging.info(f'Connected to {host}:{port}')
+    
+    # ! Sending data
+    
+    try:
+        while True:
+            s.send('Cxxxxxxtttt'.encode('ascii'))
+            data=s.recv(pack_sz)
+            logging.info(f'Received {data}')
+            fdout = open(fileout, 'ab')
+            fdout.write(data)
+            break
+    except Exception as e:
+        logging.critical(f'Unknown error: {e}')
+    finally:
+        logging.info(f'Closing socket')
+        s.close()
+
+if __name__ == "__main__":
+    main()
