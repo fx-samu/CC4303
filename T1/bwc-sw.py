@@ -50,7 +50,7 @@ def recv_loss(s, size, loss_rate):
     IMPLEMENTATION
 """
 
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s.%(msecs)03d | %(levelname).3s @ %(lineno)03d] %(message)s', datefmt='%H:%M:%S')
+logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s.%(msecs)03d | %(levelname).3s @ %(lineno)03d] %(message)s', datefmt='%H:%M:%S')
 
 file_handler = logging.FileHandler('final.log')
 logging.getLogger().addHandler(file_handler)
@@ -128,6 +128,20 @@ def get_args() -> tuple:
     return package_size, n_bytes, timeout, loss_rate, file_out, host, port
 
 def stablish_protocol(udp_connection: UdpConnectionInterface, n_bytes: int, sv_timeout_ms: int, proposed_package_size: int) -> int:
+    """_summary_
+
+    Args:
+        udp_connection (UdpConnectionInterface): _description_
+        n_bytes (int): _description_
+        sv_timeout_ms (int): _description_
+        proposed_package_size (int): _description_
+
+    Raises:
+        Exception: _description_
+
+    Returns:
+        int: _description_
+    """
     logging.debug(f'Init stablisish protocol')
     for i in range(N_TRIES_STABLISH_PROTOCOL):
         try:
