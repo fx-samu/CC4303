@@ -1,2 +1,2 @@
-# CC4303-2023-2
- 
+# CC4303 Networks
+Networks 2023-2 
